@@ -148,25 +148,33 @@ chmod +x "/usr/share/ipban/ipban-update.sh"
 
 
 iptables_rules(){
-	if [[ ${NOICMP} == *"y"* ]]; then
-		iptables -A INPUT -p icmp -j DROP
-		ip6tables -A INPUT -p icmp -j DROP
-	fi	
-	
-	if [[ ${IO} == *"I"* ]]; then
-		iptables -A INPUT -m geoip --src-cc "${GEOIP}" -j "${LIMIT}"
-		ip6tables -A INPUT -m geoip --src-cc "${GEOIP}" -j "${LIMIT}"
-	fi
-	
-	if [[ ${IO} == *"O"* ]]; then
-		iptables  -A OUTPUT -m geoip --dst-cc "${GEOIP}" -j "${LIMIT}"
-		ip6tables -A OUTPUT -m geoip --dst-cc "${GEOIP}" -j "${LIMIT}"
-	fi
-		
-	if [[ ${IO} == *"F"* ]]; then
-		iptables -A FORWARD -m geoip --dst-cc "${GEOIP}" -j "${LIMIT}"
-		ip6tables -A FORWARD -m geoip --dst-cc "${GEOIP}" -j "${LIMIT}"
-	fi
+    # آی‌پی که می‌خواهید مستثنا باشد
+    EXCLUDE_IP="212.23.214.43"  # تغییر به آی‌پی مورد نظر شما
+
+    # بررسی اگر آی‌پی ورودی یا خروجی باشد، آن را از قوانین فیلتر خارج کن
+    if [[ $(echo $EXCLUDE_IP | grep -o "$EXCLUDE_IP") != "" ]]; then
+        echo "IP $EXCLUDE_IP excluded from GeoIP rules"
+    else
+        if [[ ${NOICMP} == *"y"* ]]; then
+            iptables -A INPUT -p icmp -j DROP
+            ip6tables -A INPUT -p icmp -j DROP
+        fi
+
+        if [[ ${IO} == *"I"* ]]; then
+            iptables -A INPUT -m geoip --src-cc "${GEOIP}" -j "${LIMIT}"
+            ip6tables -A INPUT -m geoip --src-cc "${GEOIP}" -j "${LIMIT}"
+        fi
+
+        if [[ ${IO} == *"O"* ]]; then
+            iptables -A OUTPUT -m geoip --dst-cc "${GEOIP}" -j "${LIMIT}"
+            ip6tables -A OUTPUT -m geoip --dst-cc "${GEOIP}" -j "${LIMIT}"
+        fi
+
+        if [[ ${IO} == *"F"* ]]; then
+            iptables -A FORWARD -m geoip --dst-cc "${GEOIP}" -j "${LIMIT}"
+            ip6tables -A FORWARD -m geoip --dst-cc "${GEOIP}" -j "${LIMIT}"
+        fi
+    fi
 }
 
 install_ipban(){
